@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador de Emociones Faciales</title>
+    <title>Maker Face Coding</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .video-container {
@@ -36,8 +37,9 @@
 <body class="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen py-8">
     <div class="container mx-auto px-4">
         <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-indigo-800 mb-2">Analizador de Emociones Faciales</h1>
-            <p class="text-lg text-gray-600">Permite que tu cámara analice tus expresiones faciales durante 20 segundos</p>
+            <h1 class="text-4xl font-bold text-indigo-800 mb-2">Maker Face Coding</h1>
+            <h2 class="text-xl text-indigo-600">Analizador de emociones</h2>
+            <p class="text-sm text-gray-500">By Georgio UR-Steam</p>
         </header>
 
         <div class="grid md:grid-cols-2 gap-8 items-start">
@@ -138,7 +140,13 @@
                         </div>
                     </div>
                     
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="mt-6 px-4">
+                        <button id="downloadPdf" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300 flex items-center gap-2 mx-auto">
+                            <i class="fas fa-file-pdf"></i> Descargar Reporte PDF
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
                         <h3 class="font-semibold text-lg text-center mb-3">Registro de Emociones</h3>
                         <div id="emotionResults" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <!-- Dynamic content will be inserted here -->
@@ -606,6 +614,47 @@
             event.target.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
             event.target.classList.remove('bg-indigo-400', 'hover:bg-indigo-500');
         }
+
+        // Generar PDF con los resultados
+        document.getElementById('downloadPdf').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(22);
+            doc.setTextColor(55, 48, 163);
+            doc.text('Reporte de Análisis de Emociones', 105, 20, { align: 'center' });
+            
+            // Emoción predominante
+            doc.setFontSize(16);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Emoción predominante: ${dominantEmotionSpan.textContent}`, 14, 40);
+            
+            // Gráfico de emociones
+            const chartCanvas = document.getElementById('emotionChart');
+            const chartImage = chartCanvas.toDataURL('image/png');
+            doc.addImage(chartImage, 'PNG', 15, 50, 180, 100);
+            
+            // Detalle de emociones
+            doc.setFontSize(14);
+            doc.text('Detalle de emociones detectadas:', 14, 160);
+            
+            const emotionResults = document.querySelectorAll('#emotionResults > div');
+            let yPosition = 170;
+            emotionResults.forEach((result, index) => {
+                const emotion = result.querySelector('span:first-child').textContent;
+                const percentage = result.querySelector('span:last-child').textContent;
+                doc.text(`${emotion}: ${percentage}`, 20, yPosition + (index * 10));
+            });
+            
+            // Fecha y firma
+            const now = new Date();
+            doc.setFontSize(10);
+            doc.text(`Generado el ${now.toLocaleDateString()} a las ${now.toLocaleTimeString()}`, 14, 280);
+            doc.text('By Georgio UR-Steam - face-api.js', 14, 285);
+            
+            doc.save(`analisis_emociones_${now.getTime()}.pdf`);
+        });
 
         // Inicializar la aplicación cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', () => {

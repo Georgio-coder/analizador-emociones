@@ -11,11 +11,9 @@
     <style>
         .video-container {
             position: relative;
-            width: 300px; /* Tamaño fijo del contenedor */
+            width: 300px;
             height: 300px;
             margin: 0 auto;
-            overflow: hidden; /* Oculta cualquier desbordamiento */
-            border-radius: 8px;
         }
         #video, #overlay {
             position: absolute;
@@ -23,7 +21,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Asegura que el video cubra el contenedor */
+            border-radius: 8px;
         }
         .pulse {
             animation: pulse 2s infinite;
@@ -39,19 +37,18 @@
     <div class="container mx-auto px-4">
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-indigo-800 mb-2">Analizador de Emociones Faciales</h1>
-            <p class="text-lg text-gray-600">Permite que tu cámara analice tus expresiones faciales</p>
+            <p class="text-lg text-gray-600">Permite que tu cámara analice tus expresiones faciales durante 20 segundos</p>
         </header>
 
         <div class="grid md:grid-cols-2 gap-8 items-start">
             <div class="space-y-6">
                 <div class="video-container shadow-xl">
-                    <!-- MEJORA: Añadimos dimensiones iniciales para evitar saltos de layout -->
-                    <video id="video" width="300" height="300" autoplay muted playsinline class="bg-gray-200"></video>
+                    <video id="video" autoplay muted playsinline class="bg-gray-200"></video>
                     <canvas id="overlay"></canvas>
                 </div>
                 
                 <div class="text-center space-y-4">
-                    <button id="startButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-full text-lg transition duration-300 transform hover:scale-105 shadow-lg pulse" disabled>
+                    <button id="startButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-full text-lg transition duration-300 transform hover:scale-105 shadow-lg pulse">
                         Iniciar Análisis
                     </button>
                     <button id="restartButton" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full text-lg transition duration-300 transform hover:scale-105 shadow-lg hidden">
@@ -71,120 +68,272 @@
                 <div id="status" class="text-center py-4 px-6 bg-white rounded-lg shadow-md">
                     <p class="text-gray-700 font-medium">Estado: <span id="statusText">Preparando la aplicación...</span></p>
                     <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 10%"></div>
+                        <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
                     </div>
                 </div>
                 
                 <div id="timer" class="text-center text-2xl font-bold text-indigo-800 hidden">
-                    <i class="fas fa-hourglass-half fa-spin"></i> <span id="timeLeft">20</span> segundos restantes
+                    <span id="timeLeft">20</span> segundos restantes
                 </div>
             </div>
             
             <div class="bg-white p-6 rounded-xl shadow-xl h-full">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="fas fa-chart-line text-indigo-600"></i> Evolución de Emociones
+                    <i class="fas fa-chart-line text-indigo-600"></i> Evolución Temporal de Emociones
                 </h2>
                 <div class="relative h-80">
                     <canvas id="emotionChart"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs">
+                    <div class="emotion-item">
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span>Alegría</span>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                        <span>Tristeza</span>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span>Ira</span>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                        <span>Miedo</span>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <span>Sorpresa</span>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="w-3 h-3 rounded-full bg-pink-500"></div>
+                        <span>Asco</span>
+                    </div>
                 </div>
             </div>
         </div>
         
         <div id="result" class="mt-8 hidden">
-            <!-- El resto del HTML de resultados se mantiene igual... -->
+            <div class="bg-white rounded-xl shadow-xl overflow-hidden max-w-3xl mx-auto">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                    <h2 class="text-xl font-bold text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-chart-pie"></i> Resultado del Análisis
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <div class="text-center">
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-6 mb-6">
+                            <div id="emotionIcon" class="text-6xl w-24 h-24 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                                <i class="fas fa-smile"></i>
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold text-indigo-800 mb-2">
+                                    <span id="dominantEmotion"></span>
+                                </p>
+                                <div class="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
+                                    <div id="dominantPercentage" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1"><span id="percentageValue">0</span>% de presencia (<span id="intensityLevel"></span>)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <h3 class="font-semibold text-lg text-center mb-3">Registro de Emociones</h3>
+                        <div id="emotionResults" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <!-- Dynamic content will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-600 px-4 py-3 bg-white rounded-lg mt-4 border" id="emotionDescription"></p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const emotionTranslations = { happy: 'Alegría', sad: 'Tristeza', angry: 'Ira', fearful: 'Miedo', surprised: 'Sorpresa', disgusted: 'Asco', neutral: 'Neutral' };
-        const emotionDescriptions = {
-            happy: '¡Te has sentido mayormente alegre durante el análisis! La alegría es fundamental para una vida positiva.',
-            sad: 'La tristeza ha sido tu emoción predominante. Es una emoción válida que nos ayuda a valorar los momentos felices.',
-            angry: 'La ira ha sido tu principal emoción. Respirar profundamente puede ayudarte a manejar esta emoción.',
-            fearful: 'El miedo ha sido lo más detectado. Recuerda que el miedo puede ser una señal para evaluar situaciones.',
-            surprised: '¡La sorpresa ha destacado en tu análisis! Esta emoción revela sensibilidad a cambios inesperados.',
-            disgusted: 'El asco ha sido tu emoción principal. Esta emoción nos protege de situaciones desagradables.',
-            neutral: 'Tu expresión ha sido mayormente neutral. A veces la calma también es importante.'
+        // Traducciones y descripciones de emociones
+        const emotionTranslations = {
+            'happy': 'Alegría',
+            'sad': 'Tristeza',
+            'angry': 'Ira',
+            'fearful': 'Miedo',
+            'surprised': 'Sorpresa',
+            'disgusted': 'Asco',
+            'neutral': 'Neutral'
         };
         
-        let emotionChart, detectionInterval, analysisDuration = 20, timeLeft = analysisDuration, frameCount = 0;
-        let emotionTotals = { happy: 0, sad: 0, angry: 0, fearful: 0, surprised: 0, disgusted: 0, neutral: 0 };
+        const emotionDescriptions = {
+            'happy': '¡Te has sentido mayormente alegre durante el análisis! La alegría es fundamental para una vida positiva.',
+            'sad': 'La tristeza ha sido tu emoción predominante. Es una emoción válida que nos ayuda a valorar los momentos felices.',
+            'angry': 'La ira ha sido tu principal emoción. Respirar profundamente puede ayudarte a manejar esta emoción.',
+            'fearful': 'El miedo ha sido lo más detectado. Recuerda que el miedo puede ser una señal para evaluar situaciones.',
+            'surprised': '¡La sorpresa ha destacado en tu análisis! Esta emoción revela sensibilidad a cambios inesperados.',
+            'disgusted': 'El asco ha sido tu emoción principal. Esta emoción nos protege de situaciones desagradables.',
+            'neutral': 'Tu expresión ha sido mayormente neutral. A veces la calma también es importante.'
+        };
         
+        // Variables globales
+        let emotionChart;
+        let detectionInterval;
+        let analysisDuration = 20; // 20 segundos de análisis
+        let timeLeft = analysisDuration;
+        let emotionTotals = {
+            happy: 0,
+            sad: 0,
+            angry: 0,
+            fearful: 0,
+            surprised: 0,
+            disgusted: 0,
+            neutral: 0
+        };
+        let frameCount = 0;
+        
+        // Elementos del DOM
         const videoElement = document.getElementById('video');
         const overlayCanvas = document.getElementById('overlay');
         const startButton = document.getElementById('startButton');
         const statusText = document.getElementById('statusText');
         const progressBar = document.getElementById('progressBar');
         const resultDiv = document.getElementById('result');
+        const dominantEmotionSpan = document.getElementById('dominantEmotion');
+        const emotionDescriptionSpan = document.getElementById('emotionDescription');
         const timerDiv = document.getElementById('timer');
         const timeLeftSpan = document.getElementById('timeLeft');
         
+        // Inicializar la gráfica
         function initializeChart() {
             const ctx = document.getElementById('emotionChart').getContext('2d');
+            
             emotionChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: [],
                     datasets: [
-                        { label: 'Alegría', data: [], borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.3, fill: true },
-                        { label: 'Tristeza', data: [], borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3, fill: true },
-                        { label: 'Ira', data: [], borderColor: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.3, fill: true },
-                        // CORRECCIÓN: Había un error tipográfico 'rglesa' en el color de Miedo
-                        { label: 'Miedo', data: [], borderColor: '#8B5CF6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.3, fill: true },
-                        { label: 'Sorpresa', data: [], borderColor: '#F59E0B', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.3, fill: true },
-                        { label: 'Asco', data: [], borderColor: '#EC4899', backgroundColor: 'rgba(236, 72, 153, 0.1)', tension: 0.3, fill: true }
+                        {
+                            label: 'Alegría',
+                            data: [],
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Tristeza',
+                            data: [],
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Ira',
+                            data: [],
+                            borderColor: '#EF4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Miedo',
+                            data: [],
+                            borderColor: '#8B5CF6',
+                            backgroundColor: 'rglesa(139, 92, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Sorpresa',
+                            data: [],
+                            borderColor: '#F59E0B',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Asco',
+                            data: [],
+                            borderColor: '#EC4899',
+                            backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 1 }, x: {} }, animation: { duration: 0 } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Intensidad'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tiempo (actualizaciones)'
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 300
+                    }
+                }
             });
         }
         
+        // Cargar modelos de face-api.js
         async function loadModels() {
             statusText.textContent = 'Cargando modelos de IA...';
-            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            
             try {
                 await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+                    faceapi.nets.tinyFaceDetector.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models'),
+                    faceapi.nets.faceLandmark68Net.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models'),
+                    faceapi.nets.faceRecognitionNet.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models'),
+                    faceapi.nets.faceExpressionNet.loadFromUri('https://justadudewhohacks.github.io/face-api.js/models')
                 ]);
+                
+                // Actualizar barra de progreso
                 progressBar.style.width = '100%';
                 statusText.textContent = 'Modelos cargados. Listo para iniciar.';
                 startButton.disabled = false;
-                console.log('Modelos cargados.');
+                
+                console.log('Modelos cargados correctamente');
             } catch (error) {
                 console.error('Error cargando modelos:', error);
-                statusText.textContent = 'Error al cargar modelos. Recarga la página.';
-                progressBar.style.backgroundColor = 'red';
+                statusText.textContent = 'Error cargando los modelos. Recarga la página.';
             }
         }
         
-        // CORRECCIÓN CLAVE: Lógica de la cámara simplificada y más robusta.
+        // Iniciar la cámara
         async function startCamera() {
             statusText.textContent = 'Solicitando acceso a la cámara...';
             startButton.disabled = true;
-            progressBar.style.width = '0%';
-
+            
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 640, height: 480 } // Solicitar una resolución estándar
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
                 videoElement.srcObject = stream;
                 
-                // Usar 'onloadedmetadata' es más fiable que 'play' para obtener las dimensiones
-                videoElement.onloadedmetadata = () => {
+                videoElement.addEventListener('play', () => {
                     statusText.textContent = 'Cámara iniciada. Preparando análisis...';
                     
-                    // Ajustar el canvas de superposición a la resolución REAL del video
+                    // Ajustar el canvas de superposición al tamaño del video
                     const videoWidth = videoElement.videoWidth;
                     const videoHeight = videoElement.videoHeight;
                     
+                    videoElement.width = videoWidth;
+                    videoElement.height = videoHeight;
                     overlayCanvas.width = videoWidth;
                     overlayCanvas.height = videoHeight;
                     
-                    startAnalysis();
-                };
+                    // Iniciar el análisis después de un pequeño retraso
+                    setTimeout(startAnalysis, 500);
+                });
             } catch (error) {
                 console.error('Error accediendo a la cámara:', error);
                 statusText.textContent = 'Error al acceder a la cámara. Asegúrate de dar permisos.';
@@ -192,40 +341,80 @@
             }
         }
         
+        // Iniciar el análisis de emociones
         function startAnalysis() {
             statusText.textContent = 'Análisis en progreso...';
             timerDiv.classList.remove('hidden');
-            timeLeft = analysisDuration; // Reiniciar el contador
             updateTimer();
             
+            // Mostrar el temporizador
             const countdown = setInterval(() => {
                 timeLeft--;
                 updateTimer();
-                if (timeLeft <= 0) clearInterval(countdown);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                }
             }, 1000);
             
+            // Iniciar detecciones periódicas
             detectionInterval = setInterval(async () => {
-                const detections = await faceapi.detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
-                
-                if (detections) {
-                    const expressions = detections.expressions;
-                    frameCount++;
-                    for (const emotion in expressions) {
-                        if (emotionTotals.hasOwnProperty(emotion)) {
-                            emotionTotals[emotion] += expressions[emotion];
+                try {
+                    const detections = await faceapi.detectSingleFace(
+                        videoElement, 
+                        new faceapi.TinyFaceDetectorOptions()
+                    ).withFaceLandmarks().withFaceExpressions();
+                    
+                    const ctx = overlayCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                    
+                    // Dibujar detecciones si se encontró un rostro
+                    if (detections) {
+                        const resizedDetections = faceapi.resizeResults(detections, {
+                            width: overlayCanvas.width,
+                            height: overlayCanvas.height
+                        });
+                        
+                        // Dibujar caja alrededor del rostro
+                        faceapi.draw.drawDetections(overlayCanvas, resizedDetections);
+                        
+                        // Dibujar puntos de referencia faciales
+                        faceapi.draw.drawFaceLandmarks(overlayCanvas, resizedDetections);
+                        
+                        // Extraer emociones
+                        const expressions = detections.expressions;
+                        
+                        // Acumular totales para cada emoción
+                        for (const emotion in expressions) {
+                            if (emotionTotals.hasOwnProperty(emotion)) {
+                                emotionTotals[emotion] += expressions[emotion];
+                            }
                         }
+                        frameCount++;
+                        
+                        // Actualizar la gráfica
+                        updateChart(expressions);
                     }
-                    updateChart(expressions);
+                } catch (error) {
+                    console.error('Error en detección:', error);
                 }
-            }, 500);
+            }, 500); // Cada 500ms (0.5 segundos)
             
+            // Configurar el tiempo para detener el análisis (20 segundos)
             setTimeout(stopAnalysis, analysisDuration * 1000);
         }
         
+        // Actualizar la gráfica con nuevos datos
         function updateChart(expressions) {
-            const timeLabel = (analysisDuration - timeLeft).toFixed(1);
-            emotionChart.data.labels.push(timeLabel);
+            const timeLabel = `Seg ${(analysisDuration - timeLeft) + ((500 * (frameCount % 2)) / 1000)}`;
             
+            // Agregar nuevo punto de tiempo si no existe
+            if (emotionChart.data.labels.length === 0 || 
+                !emotionChart.data.labels.includes(timeLabel)) {
+                emotionChart.data.labels.push(timeLabel);
+            }
+            
+            // Agregar datos para cada emoción en el nuevo punto de tiempo
             emotionChart.data.datasets[0].data.push(expressions.happy);
             emotionChart.data.datasets[1].data.push(expressions.sad);
             emotionChart.data.datasets[2].data.push(expressions.angry);
@@ -233,102 +422,200 @@
             emotionChart.data.datasets[4].data.push(expressions.surprised);
             emotionChart.data.datasets[5].data.push(expressions.disgusted);
             
-            if (emotionChart.data.labels.length > 40) { // Limitar puntos
+            // Limitar a 40 puntos para mantener la gráfica legible
+            if (emotionChart.data.labels.length > 40) {
                 emotionChart.data.labels.shift();
                 emotionChart.data.datasets.forEach(dataset => dataset.data.shift());
             }
+            
             emotionChart.update();
         }
         
+        // Detener el análisis y mostrar resultados
         function stopAnalysis() {
             clearInterval(detectionInterval);
             timerDiv.classList.add('hidden');
             
+            // Detener la cámara
             const stream = videoElement.srcObject;
             if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
             }
-            videoElement.srcObject = null; // Liberar el objeto de video
             
             statusText.textContent = 'Análisis finalizado';
             
-            if (frameCount === 0) {
-                statusText.textContent = 'No se detectó ningún rostro durante el análisis.';
-                document.getElementById('restartButton').classList.remove('hidden');
-                startButton.classList.add('hidden');
-                return;
-            }
-
-            // Calcular y mostrar resultados... (el resto de tu lógica es buena y se mantiene)
-            const avgEmotions = {};
-            for (const emotion in emotionTotals) {
-                avgEmotions[emotion] = emotionTotals[emotion] / frameCount;
+            // Calcular la emoción predominante
+            const avgEmotions = Object.fromEntries(
+                Object.entries(emotionTotals).map(([emotion, total]) => [emotion, total / frameCount])
+            );
+            
+            let dominantEmotion = 'neutral';
+            let maxAvg = 0;
+            
+            for (const emotion in avgEmotions) {
+                if (avgEmotions[emotion] > maxAvg) {
+                    maxAvg = avgEmotions[emotion];
+                    dominantEmotion = emotion;
+                }
             }
             
-            const dominantEmotion = Object.keys(avgEmotions).reduce((a, b) => avgEmotions[a] > avgEmotions[b] ? a : b);
-            
-            // Re-utilizar la estructura de resultados que ya tenías
-            resultDiv.innerHTML = `
-                <div class="bg-white rounded-xl shadow-xl overflow-hidden max-w-3xl mx-auto">
-                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
-                        <h2 class="text-xl font-bold text-white flex items-center justify-center gap-2">
-                            <i class="fas fa-chart-pie"></i> Resultado del Análisis
-                        </h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="text-center">
-                            <p class="text-2xl font-bold text-indigo-800 mb-2">
-                                Emoción Predominante: ${emotionTranslations[dominantEmotion]}
-                            </p>
-                        </div>
-                        <p class="text-gray-600 px-4 py-3 bg-gray-50 rounded-lg mt-4 border text-center">${emotionDescriptions[dominantEmotion]}</p>
-                    </div>
-                </div>
-            `;
+            // Mostrar resultados con icono y porcentaje
             resultDiv.classList.remove('hidden');
+            const percentage = (avgEmotions[dominantEmotion] * 100).toFixed(1);
+            
+            // Actualizar icono según emoción
+            const emotionIcons = {
+                'happy': 'fa-face-smile',
+                'sad': 'fa-face-sad-tear',
+                'angry': 'fa-face-angry',
+                'fearful': 'fa-face-fearful',
+                'surprised': 'fa-face-surprise',
+                'disgusted': 'fa-face-nauseated',
+                'neutral': 'fa-face-meh'
+            };
+            
+            const iconElement = document.getElementById('emotionIcon');
+            iconElement.innerHTML = `<i class="fas ${emotionIcons[dominantEmotion]}"></i>`;
+            
+            // Actualizar colores según emoción
+            const emotionColors = {
+                'happy': 'from-green-500 to-emerald-500',
+                'sad': 'from-blue-500 to-sky-500', 
+                'angry': 'from-red-500 to-rose-500',
+                'fearful': 'from-purple-500 to-violet-500',
+                'surprised': 'from-yellow-500 to-amber-500',
+                'disgusted': 'from-green-600 to-lime-500',
+                'neutral': 'from-gray-500 to-slate-500'
+            };
+            
+            const percentageBar = document.getElementById('dominantPercentage');
+            percentageBar.className = `h-full bg-gradient-to-r ${emotionColors[dominantEmotion]}`;
+            
+            // Animación de llenado de la barra
+            percentageBar.style.width = '0%';
+            setTimeout(() => {
+                percentageBar.style.width = `${percentage}%`;
+            }, 100);
+            
+            dominantEmotionSpan.textContent = emotionTranslations[dominantEmotion];
+            document.getElementById('percentageValue').textContent = percentage;
+            // Mostrar todas las emociones registradas
+            const emotionResults = document.getElementById('emotionResults');
+            emotionResults.innerHTML = '';
+            
+            for (const emotion in avgEmotions) {
+                if (emotion !== 'neutral' || dominantEmotion === 'neutral') {
+                    const percentage = (avgEmotions[emotion] * 100).toFixed(1);
+                    const intensity = getIntensityLevel(percentage);
+                    
+                    emotionResults.innerHTML += `
+                        <div class="bg-white p-3 rounded-lg shadow-sm border">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-medium">${emotionTranslations[emotion]}</span>
+                                <span class="text-sm font-bold">${percentage}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="h-2 rounded-full" style="width: ${percentage}%; background-color: ${
+                                    emotion === 'happy' ? '#10B981' :
+                                    emotion === 'sad' ? '#3B82F6' :
+                                    emotion === 'angry' ? '#EF4444' :
+                                    emotion === 'fearful' ? '#8B5CF6' :
+                                    emotion === 'surprised' ? '#F59E0B' :
+                                    emotion === 'disgusted' ? '#EC4899' : '#9CA3AF'
+                                }"></div>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">${intensity}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            emotionDescriptionSpan.textContent = emotionDescriptions[dominantEmotion];
+            document.getElementById('intensityLevel').textContent = getIntensityLevel(percentage);
             document.getElementById('restartButton').classList.remove('hidden');
-            startButton.classList.add('hidden');
-        }
-
-        function updateTimer() {
-            timeLeftSpan.textContent = timeLeft;
-            if (timeLeft <= 5) timeLeftSpan.parentElement.classList.add('text-red-500');
+            
+            // Mostrar estadísticas en consola
+            console.log('Análisis completado:');
+            console.log(`- Frames analizados: ${frameCount}`);
+            console.log('- Promedios de emociones:');
+            for (const emotion in avgEmotions) {
+                console.log(`  ${emotionTranslations[emotion] || emotion}: ${(avgEmotions[emotion] * 100).toFixed(1)}%`);
+            }
+            console.log(`- Emoción predominante: ${emotionTranslations[dominantEmotion]}`);
         }
         
+        // Actualizar el temporizador
+        function updateTimer() {
+            timeLeftSpan.textContent = timeLeft;
+            
+            // Cambiar color cuando quedan pocos segundos
+            if (timeLeft <= 5) {
+                timeLeftSpan.classList.add('text-red-500');
+            } else {
+                timeLeftSpan.classList.remove('text-red-500');
+            }
+        }
+        
+        // Función para obtener el nivel de intensidad
+        function getIntensityLevel(percentage) {
+            if (percentage > 75) return 'Alto interés';
+            if (percentage > 50) return 'Medio interés';
+            if (percentage > 25) return 'Bajo interés';
+            return 'Nulo interés';
+        }
+
+        // Reiniciar el análisis
         function resetAnalysis() {
             timeLeft = analysisDuration;
             frameCount = 0;
-            for(const key in emotionTotals) { emotionTotals[key] = 0; }
+            emotionTotals = {
+                happy: 0,
+                sad: 0,
+                angry: 0,
+                fearful: 0,
+                surprised: 0,
+                disgusted: 0,
+                neutral: 0
+            };
             
+            // Reset chart
             emotionChart.data.labels = [];
             emotionChart.data.datasets.forEach(dataset => dataset.data = []);
             emotionChart.update();
             
+            // Reset UI elements
             resultDiv.classList.add('hidden');
             startButton.disabled = false;
-            startButton.classList.remove('hidden');
             document.getElementById('restartButton').classList.add('hidden');
             statusText.textContent = 'Listo para iniciar nuevo análisis';
-            progressBar.style.width = '100%';
-            timeLeftSpan.parentElement.classList.remove('text-red-500');
+            progressBar.style.width = '0%';
         }
 
-        function setDuration(seconds, event) {
+        // Configurar duración del análisis
+        function setDuration(seconds) {
             analysisDuration = seconds;
+            timeLeft = seconds;
+            document.getElementById('timeLeft').textContent = seconds;
+            
+            // Update active button
             document.querySelectorAll('.duration-btn').forEach(btn => {
-                btn.classList.replace('bg-indigo-600', 'bg-indigo-400');
-                btn.classList.replace('hover:bg-indigo-700', 'hover:bg-indigo-500');
+                btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                btn.classList.add('bg-indigo-400', 'hover:bg-indigo-500');
             });
-            event.target.classList.replace('bg-indigo-400', 'bg-indigo-600');
-            event.target.classList.replace('hover:bg-indigo-500', 'hover:bg-indigo-700');
+            event.target.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            event.target.classList.remove('bg-indigo-400', 'hover:bg-indigo-500');
         }
 
+        // Inicializar la aplicación cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('duration20').addEventListener('click', (e) => setDuration(20, e));
-            document.getElementById('duration30').addEventListener('click', (e) => setDuration(30, e));
-            document.getElementById('duration40').addEventListener('click', (e) => setDuration(40, e));
-            document.getElementById('restartButton').addEventListener('click', resetAnalysis);
+            // Set up duration buttons
+            document.getElementById('duration20').addEventListener('click', () => setDuration(20));
+            document.getElementById('duration30').addEventListener('click', () => setDuration(30));
+            document.getElementById('duration40').addEventListener('click', () => setDuration(40));
             
+            // Set up restart button
+            document.getElementById('restartButton').addEventListener('click', resetAnalysis);
             initializeChart();
             loadModels();
             
